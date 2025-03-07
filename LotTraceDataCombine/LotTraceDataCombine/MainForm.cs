@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace LotTraceDataCombine
 {
   public partial class Form1 : Form
@@ -9,6 +11,7 @@ namespace LotTraceDataCombine
 
     private void Form1_Load(object sender, EventArgs e)
     {
+      Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
       textBoxEDULogFolder.Text = Properties.Settings.Default.EDUFolder;
       textBoxMotorLogFolder.Text = Properties.Settings.Default.MotorFolder;
       textBoxJissouLogFolder.Text = Properties.Settings.Default.JissouFolder;
@@ -48,7 +51,6 @@ namespace LotTraceDataCombine
       }
       catch (Exception exp) 
       { 
-
       }  
     }
   }
