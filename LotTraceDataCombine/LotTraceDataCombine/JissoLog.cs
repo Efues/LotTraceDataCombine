@@ -39,6 +39,14 @@ namespace LotTraceDataCombine
       }
     } // 実装-個片
 
+    public string JissouSerial
+    {
+      get
+      {
+        if (KibanID.Length < 22) return string.Empty;
+        return KibanID.Substring(13, 10) + Kohen;
+      }
+    }
 
     public string JissouHinban // 実装ー実装品番
     {
@@ -75,11 +83,13 @@ namespace LotTraceDataCombine
           }
         }
       }
+
       return rtn;
     }
     public void Append(JissoLogRecord adding)
     {
-      var key = adding.KibanID + adding.Kohen;//;(adding.OffsetNo + 1);
+      var key = adding.JissouSerial;
+//      var key = adding.KibanID + adding.Kohen;//;(adding.OffsetNo + 1);
       if (Rec.ContainsKey(key))
       {
         if (DupCnt.ContainsKey(key)) DupCnt[key] += 1;
