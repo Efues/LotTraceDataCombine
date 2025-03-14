@@ -29,11 +29,11 @@ namespace LotTraceDataCombine
 
   public class MotorLog
   {
-    private Dictionary<string, MotorEDULogRecord> EDURec { get; } = new Dictionary<string, MotorEDULogRecord>();
+    public Dictionary<string, MotorEDULogRecord> EDURec { get; } = new Dictionary<string, MotorEDULogRecord>();
 
     private Dictionary<string, int> EDUDupCnt { get; } = new Dictionary<string, int>();
 
-    private Dictionary<string, MotorInspectLogRecord> InspRec { get; } = new Dictionary<string, MotorInspectLogRecord>();
+    public Dictionary<string, MotorInspectLogRecord> InspRec { get; } = new Dictionary<string, MotorInspectLogRecord>();
 
     private Dictionary<string, int> InspDupCnt { get; } = new Dictionary<string, int>();
 
@@ -44,8 +44,7 @@ namespace LotTraceDataCombine
     internal static MotorLog Load(string folder)
     {
       var rtn = new MotorLog();
-      foreach(var subFolder in Directory.EnumerateDirectories(folder))
-      foreach (var filePath in Directory.EnumerateFiles(subFolder, "*.xlsx"))
+      foreach (var filePath in Directory.EnumerateFiles(folder, "*.xlsx"))
       {
         using (IXLWorkbook workbook = new XLWorkbook(filePath))
         {

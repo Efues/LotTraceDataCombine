@@ -70,5 +70,17 @@ namespace LotTraceDataCombine.Properties {
                 this["OutputFile"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string MotorFolderXls {
+            get {
+                return ((string)(this["MotorFolderXls"]));
+            }
+            set {
+                this["MotorFolderXls"] = value;
+            }
+        }
     }
 }
