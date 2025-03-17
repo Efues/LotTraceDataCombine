@@ -72,7 +72,7 @@ namespace LotTraceDataCombine
         }
         else
         {
-          // ê¨å˜ÇµÇΩèÍçáÅAÅA
+          textBoxStatus.Text = mgr.StatMsg.ToString();
         }
       }
       catch (Exception exp)

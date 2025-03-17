@@ -31,6 +31,7 @@ namespace LotTraceDataCombine
 
     internal Result Execute()
     {
+      var stt = System.Environment.TickCount;
       StatMsg.Clear();
 
       var result = CheckFolderExistance();
@@ -43,36 +44,62 @@ namespace LotTraceDataCombine
       }
 
       // 実装ログをロード
+      var stt1 = 0;
+
+      stt1 = Environment.TickCount;
+      StatMsg.AppendLine("実装ログの読み込み....");
       var jissoLog = JissoLog.Load(this.JissouFolder);
+      StatMsg.AppendLine($"....完了({(Environment.TickCount - stt1)/1000}秒)");
+      StatMsg.AppendLine($"実装ログ:{jissoLog.Rec.Count()}件");
 
       // EDUログをロード
+      stt1 = Environment.TickCount;
+      StatMsg.AppendLine("EDUログの読み込み....");
       var eduLog = EDULog.Load(this.EDUFolder);
+      StatMsg.AppendLine($"....完了({(Environment.TickCount - stt1)/1000}秒)");
+      StatMsg.AppendLine($"EDUログ:{eduLog.Rec.Count()}件");
 
       // モーターログをロード
+      stt1 = Environment.TickCount;
+      StatMsg.AppendLine("Motorログの読み込み....");
       var motorLog = MotorLog.Load(this.MotorFolder);
+      StatMsg.AppendLine($"....完了({(Environment.TickCount - stt1)/1000}秒)");
+      StatMsg.AppendLine($"MotorEDUSheet:{motorLog.EDURec.Count()}件");
+      StatMsg.AppendLine($"Motor検査Sheet:{motorLog.InspRec.Count()}件");
+      StatMsg.AppendLine($"Motor結合ログ:{motorLog.Rec.Count()}件");
 
       // データを連結
       var eduMotorRec = new Dictionary<string, (EDULogRecord, MotorEDULogRecord, MotorInspectLogRecord)>();
-      foreach (var rec in eduLog.Rec)
       {
-        var key = rec.Key;
-        if (motorLog.Rec.ContainsKey(key))
+        stt1 = Environment.TickCount;
+        StatMsg.AppendLine("実装ログとEDUログの紐づけ....");
+        foreach (var eduRec in eduLog.Rec)
         {
-          var motorLogAppend = motorLog.Rec[key];
-          eduMotorRec.Add(key, (rec.Value, motorLogAppend.Item1, motorLogAppend.Item2));
+          var eduQRkey = eduRec.Key;
+          if (motorLog.Rec.ContainsKey(eduQRkey))
+          {
+            var motorLogAppend = motorLog.Rec[eduQRkey];
+            eduMotorRec.Add(eduQRkey, (eduRec.Value, motorLogAppend.Item1, motorLogAppend.Item2));
+          }
         }
+        StatMsg.AppendLine($"....完了({(Environment.TickCount - stt1)/1000}秒)");
+        StatMsg.AppendLine($"EDUMotor結合ログ:{eduMotorRec.Count()}件");
       }
 
       var combinedRec = new List<(JissoLogRecord, EDULogRecord, MotorEDULogRecord, MotorInspectLogRecord)>();
-      foreach (var rec in eduMotorRec)
       {
-        //        var key = rec.Key;
-        var jissouSerial = rec.Value.Item1.JissouSerial;
-        if (jissoLog.Rec.ContainsKey(jissouSerial))
+        stt1 = Environment.TickCount;
+        foreach (var eduRec in eduMotorRec)
         {
-          var appendingJissuRec = jissoLog.Rec[jissouSerial];
-          combinedRec.Add((appendingJissuRec, rec.Value.Item1, rec.Value.Item2, rec.Value.Item3));
+          var jissouSerial = eduRec.Value.Item1.JissouSerial;
+          if (jissoLog.Rec.ContainsKey(jissouSerial))
+          {
+            var appendingJissuRec = jissoLog.Rec[jissouSerial];
+            combinedRec.Add((appendingJissuRec, eduRec.Value.Item1, eduRec.Value.Item2, eduRec.Value.Item3));
+          }
         }
+        StatMsg.AppendLine($"....完了({(Environment.TickCount - stt1)/1000}秒)");
+        StatMsg.AppendLine($"実装EDUMotor結合ログ:{combinedRec.Count()}件");
       }
 
       return Result.Success;

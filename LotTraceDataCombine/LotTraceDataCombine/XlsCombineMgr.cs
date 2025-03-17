@@ -36,6 +36,8 @@ namespace LotTraceDataCombine
 
       try
       {
+        StatMsg.AppendLine("変換開始....");
+        var stt = Environment.TickCount;
         foreach (var subFolder in Directory.EnumerateDirectories(InFolder))
         {
           foreach (var filePath in Directory.EnumerateFiles(subFolder, "*.xls"))
@@ -45,6 +47,8 @@ namespace LotTraceDataCombine
             var newName = subFolderName + "_" + fileName + ".xlsx";
             var outFilePath = Path.Combine(OutFolder, newName);
 
+            if (File.Exists(outFilePath)) File.Delete(outFilePath);
+
             // .xlsファイルを開く
             workbook = excelApp.Workbooks.Open(filePath);
 
@@ -52,6 +56,7 @@ namespace LotTraceDataCombine
             workbook.SaveAs(outFilePath, Excel.XlFileFormat.xlOpenXMLWorkbook);
           }
         }
+        StatMsg.AppendLine($"....完了({(Environment.TickCount - stt) / 1000}秒)");
       }
       catch (Exception ex)
       {
