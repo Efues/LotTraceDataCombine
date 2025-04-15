@@ -20,7 +20,7 @@ namespace LotTraceDataCombine
       {
         if(Kanban != null && Kanban.Length > 97)
         {
-          return Kanban.Substring(93, 4);
+          return Kanban.Substring(92, 4);
         }
         return String.Empty;
       }  
@@ -35,28 +35,21 @@ namespace LotTraceDataCombine
 //    public string SagyoushaID { get; set; }
     public string GSSHaraidashiDT { get; set; } // EDUー流動日時
 
-    public string KanbanKanriNo // EDUーかんばん管理No
-    {
-      get
-      {
-        if (Kanban.Length <= 97) return string.Empty;
-        return Kanban.Substring(93, 4);
-      }
-    }
-
     public string JissouSerial
     {
       get
       {
         if(Serial1.Length < 23) return string.Empty;
-        return Serial1.Substring(13, 11);
+        return Serial1.Substring(12, 11);
       }
     }
   }
 
   public class EDULog
   {
+    // keyはEDU QR
     public Dictionary<string, EDULogRecord> Rec { get; } = new Dictionary<string, EDULogRecord>();
+    public Dictionary<string, EDULogRecord> RecJissouKey { get; } = new Dictionary<string, EDULogRecord>();
 
     private Dictionary<string, int> DupCnt { get; } = new Dictionary<string, int>();
 
@@ -135,7 +128,11 @@ namespace LotTraceDataCombine
         if (DupCnt.ContainsKey(key)) DupCnt[key] += 1;
         else DupCnt[key] = 1;
       }
-      else Rec[key] = adding;
+      else
+      {
+        Rec[key] = adding;
+        RecJissouKey[adding.JissouSerial] = adding;
+      }
     }
   }
 }

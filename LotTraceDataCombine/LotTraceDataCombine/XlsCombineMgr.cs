@@ -7,7 +7,6 @@ namespace LotTraceDataCombine
   public class XlsCombineMgr
   {
     public string ErrMsg { get; private set; } = string.Empty;
-    public StringBuilder StatMsg { get; private set; } = new StringBuilder();
 
     private string InFolder { get; }
     private string OutFolder { get; }
@@ -21,8 +20,6 @@ namespace LotTraceDataCombine
 
     internal Result Execute(System.ComponentModel.BackgroundWorker bgWorker)
     {
-      StatMsg.Clear();
-
       if (!Directory.Exists(OutFolder) && OutFolder != null)
       {
         Directory.CreateDirectory(OutFolder);
@@ -36,13 +33,22 @@ namespace LotTraceDataCombine
 
       try
       {
-        StatMsg.AppendLine("変換開始....");
+        var cnter = 0;
+        bgWorker.ReportProgress(++cnter, "処理開始....");
         var stt = Environment.TickCount;
         foreach (var subFolder in Directory.EnumerateDirectories(InFolder))
         {
-          foreach (var filePath in Directory.EnumerateFiles(subFolder, "*.xls"))
+          var subFolderName = Path.GetFileName(subFolder);
+          bgWorker.ReportProgress(++cnter, subFolderName);
+
+          var fileList = Directory.EnumerateFiles(subFolder, "*.xls").ToList();
+          var fileCnt = fileList.Count();
+          var fileIdx = 0;
+          foreach (var filePath in fileList)
           {
-            var subFolderName = Path.GetFileName(subFolder);
+            fileIdx++;
+            bgWorker.ReportProgress(++cnter, $"{fileIdx}/{fileCnt}");
+
             var fileName = Path.GetFileNameWithoutExtension(filePath);
             var newName = subFolderName + "_" + fileName + ".xlsx";
             var outFilePath = Path.Combine(OutFolder, newName);
@@ -56,10 +62,12 @@ namespace LotTraceDataCombine
             workbook.SaveAs(outFilePath, Excel.XlFileFormat.xlOpenXMLWorkbook);
           }
         }
-        StatMsg.AppendLine($"....完了({(Environment.TickCount - stt) / 1000}秒)");
+        bgWorker.ReportProgress(++cnter, $"....完了({(Environment.TickCount - stt) / 1000}秒)");
       }
       catch (Exception ex)
       {
+        bgWorker.ReportProgress(0, "内部エラー");
+        bgWorker.ReportProgress(0, ex.Message);
         Console.WriteLine(ex.Message);
       }
       finally
@@ -71,8 +79,8 @@ namespace LotTraceDataCombine
         }
 
         // COMオブジェクトの解放
-        System.Runtime.InteropServices.Marshal.ReleaseComObject(workbook);
-        System.Runtime.InteropServices.Marshal.ReleaseComObject(excelApp);
+        if (workbook != null) System.Runtime.InteropServices.Marshal.ReleaseComObject(workbook);
+        if (excelApp != null) System.Runtime.InteropServices.Marshal.ReleaseComObject(excelApp);
       }
       return Result.Success;
     }

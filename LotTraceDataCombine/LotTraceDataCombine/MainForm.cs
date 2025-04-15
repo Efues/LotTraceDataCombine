@@ -24,6 +24,11 @@ namespace LotTraceDataCombine
 
     private void Form1_FormClosing(object sender, FormClosingEventArgs e)
     {
+      SaveCtrlInput();
+    }
+
+    private void SaveCtrlInput()
+    {
       Properties.Settings.Default.MotorFolderXls = textBoxMotorLogFolder_xls.Text;
       Properties.Settings.Default.EDUFolder = textBoxEDULogFolder.Text;
       Properties.Settings.Default.EDUFolderManual = textBoxEDULogFolderManual.Text;
@@ -38,6 +43,9 @@ namespace LotTraceDataCombine
     {
       try
       {
+        // コントローラの状態を保存
+        SaveCtrlInput();
+
         //処理が行われているときは、何もしない
         if (backgroundWorkerMain.IsBusy)
           return;
@@ -145,7 +153,7 @@ namespace LotTraceDataCombine
     {
       try
       {
-        SelectFolder(textBoxEDULogFolder);
+        SelectFolder(textBoxMotorLogFolder);
       }
       catch (Exception exp)
       {
@@ -158,7 +166,7 @@ namespace LotTraceDataCombine
     {
       try
       {
-        SelectFolder(textBoxEDULogFolder);
+        SelectFolder(textBoxOutputFile);
       }
       catch (Exception exp)
       {
@@ -182,10 +190,18 @@ namespace LotTraceDataCombine
 
     private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
     {
+      UpdateTextBoxStatus(e);
+    }
+
+    private void UpdateTextBoxStatus(ProgressChangedEventArgs e)
+    {
       if (e.UserState != null)
       {
         textBoxStatus.Text += e.UserState.ToString();
         textBoxStatus.Text += System.Environment.NewLine;
+        textBoxStatus.SelectionStart = textBoxStatus.Text.Length;
+        textBoxStatus.Focus();
+        textBoxStatus.ScrollToCaret();
       }
     }
 
@@ -199,6 +215,7 @@ namespace LotTraceDataCombine
     {
       var bgWorker = (BackgroundWorker)sender;
 
+      var hinbanMappingTable = "./Data/HinbanMapping.csv";
       var eDUFolder = textBoxEDULogFolder.Text;
       var eDUFolderManual = textBoxEDULogFolderManual.Text;
       var motorFolder = textBoxMotorLogFolder.Text;
@@ -206,18 +223,13 @@ namespace LotTraceDataCombine
       var jissouFolderManual = textBoxJissouLogFolderManual.Text;
       var outputFile = textBoxOutputFile.Text;
 
-      var mgr = new FileCombineMgr(eDUFolder, eDUFolderManual, motorFolder, jissouFolder, jissouFolderManual, outputFile);
+      var mgr = new FileCombineMgr(hinbanMappingTable, eDUFolder, eDUFolderManual, motorFolder, jissouFolder, jissouFolderManual, outputFile);
       var result = mgr.Execute(bgWorker);
       if (result == Result.Failed)
       {
         MessageBox.Show(mgr.ErrMsg, Properties.Resources.Error);
         return;
       }
-      else
-      {
-        textBoxStatus.Text += mgr.StatMsg.ToString();
-      }
-
     }
 
     private void backgroundWorkerMotorConv_DoWork(object sender, DoWorkEventArgs e)
@@ -234,15 +246,11 @@ namespace LotTraceDataCombine
         MessageBox.Show(mgr.ErrMsg, Properties.Resources.Error);
         return;
       }
-      else
-      {
-        textBoxStatus.Text = mgr.StatMsg.ToString();
-      }
     }
 
     private void backgroundWorkerMotorConv_ProgressChanged(object sender, ProgressChangedEventArgs e)
     {
-
+      UpdateTextBoxStatus(e);
     }
 
     private void backgroundWorkerMotorConv_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)

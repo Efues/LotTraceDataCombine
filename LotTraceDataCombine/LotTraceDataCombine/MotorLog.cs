@@ -9,6 +9,23 @@ namespace LotTraceDataCombine
     public string LineSerial { get; set; }
     public string LineNo { get; set; }
     public string EDUSerial { get; set; }
+
+    public string JissouSerial
+    {
+      get
+      {
+        if (EDUSerial.Length < 23) return string.Empty;
+        return EDUSerial.Substring(12, 11);
+      }
+    }
+    public string EDUHinban
+    {
+      get
+      {
+        if (EDUSerial.Length < 10) return string.Empty;
+        return EDUSerial.Substring(0, 6) + "-" + EDUSerial.Substring(5, 4);
+      }
+    }
   }
 
   public class MotorInspectLogRecord
@@ -35,38 +52,21 @@ namespace LotTraceDataCombine
 
     public string KensaKanryouNichiji { get; set; } // モーター流動日時
 
-    public string MotorQR 
+    public string GetMotorQR(Dictionary<string, string> hinbanMappingTable)
     { 
-      get
+      var rtn = String.Empty;
+      var hit = hinbanMappingTable.Where(item => SeihinHinban.StartsWith(item.Key));
+      if (hit.Any()&& SerialStr != null && SerialStr.Length >= 11) 
       {
-        var hinbanMappingTable = new Dictionary<string, string>() 
-        {
-          { "235100-085", "1309047020" },
-          { "235100-086", "1309025010" },
-          { "235100-096", "13090F0010" },
-          { "235100-087", "PE02124Z0B" },
-          { "235100-097", "PE31124Z0 " },
-          { "235100-100", "HF01124Z0 " },
-          { "235100-111", "1274253S00" },
-          { "235100-114", "143206MAJ0" },
-          { "235100-118", "13090F2010" },
-          { "235100-120", "1432069FA0" },
-        };
-
-        var rtn = String.Empty;
-        var hit = hinbanMappingTable.Where(item => SeihinHinban.StartsWith(item.Key));
-        if (hit.Any()&& SerialStr != null && SerialStr.Length >= 11) 
-        {
-          rtn = hit.First().Value;
-          rtn += KensaKanryouNichiji.Substring(2, 2);
-          rtn += SerialStr.Substring(0, 2);
-          rtn += SerialStr.Substring(3, 2);
-          rtn += "      "; // 空白6
-          rtn += SerialStr.Substring(5, 6); // 空白6
-          rtn += "       "; // 空白7
-        }
-        return rtn;
+        rtn = hit.First().Value;
+        rtn += KensaKanryouNichiji.Substring(2, 2);
+        rtn += SerialStr.Substring(0, 2);
+        rtn += SerialStr.Substring(3, 2);
+        rtn += "      "; // 空白6
+        rtn += SerialStr.Substring(5, 6); // 空白6
+        rtn += "       "; // 空白7
       }
+      return rtn;
     } 
   }
 
@@ -82,14 +82,19 @@ namespace LotTraceDataCombine
 
 
     // KeyはEDUSerial
-    public Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)> Rec { get; } = new Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)>();
+    public Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)> Rec { get; } 
+      = new Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)>();
+
+    // 実装シリアルがキーの場合
+    public Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)> RecJissouKey { get; } = new Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)>();
 
     internal static MotorLog Load(string folder, BackgroundWorker bgWorker)
     {
       var rtn = new MotorLog();
+      if (!Directory.Exists(folder))return rtn;
       var fileList = Directory.EnumerateFiles(folder, "*.xlsx").ToList();
       var fileCnt = fileList.Count;
-      var fileIdx = 1;
+      var fileIdx = 0;
       foreach (var filePath in fileList)
       {
         fileIdx++;
@@ -158,7 +163,15 @@ namespace LotTraceDataCombine
         if (rtn.InspRec.ContainsKey(key))
         {
           var newKey = eduRec.Value.EDUSerial;
-          rtn.Rec.Add(newKey, (eduRec.Value, rtn.InspRec[key]));
+          var addingInstRec = rtn.InspRec[key];
+          if (!rtn.Rec.ContainsKey(newKey)) {
+            rtn.Rec.Add(newKey, (eduRec.Value, addingInstRec));
+          }
+
+          var jissouKey = eduRec.Value.JissouSerial;
+          if (!rtn.RecJissouKey.ContainsKey(jissouKey)) {
+            rtn.RecJissouKey.Add(jissouKey, (eduRec.Value, addingInstRec));
+          }
         }
       }
 

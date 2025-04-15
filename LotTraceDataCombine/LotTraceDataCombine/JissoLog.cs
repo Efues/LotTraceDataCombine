@@ -66,7 +66,7 @@ namespace LotTraceDataCombine
       get
       {
         if (KibanID.Length < 22) return string.Empty;
-        return KibanID.Substring(13, 10) + Kohen;
+        return KibanID.Substring(12, 10) + Kohen;
       }
     }
 
@@ -105,7 +105,6 @@ namespace LotTraceDataCombine
 
     private static void LoadManual(string folderManual, JissoLog rtn)
     {
-
       // 手動実装ログをロード
       foreach (var filePath in Directory.EnumerateFiles(folderManual))
       {
@@ -119,8 +118,10 @@ namespace LotTraceDataCombine
             {
               if (line == null) continue;
               var items = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
-              if (items.Length == 2 && int.TryParse(items[1], out var offset))
+
+              if (items.Length == 2)
               {
+                var offset = Convert.ToInt32(items[1], 16) - 1;
                 var adding = new JissoLogRecord()
                 {
                   KibanID = items[0],
@@ -130,8 +131,14 @@ namespace LotTraceDataCombine
               }
               if (items.Length == 1)
               {
-                // TODO個片を12個ループさせる
+                for (var i = 0; i <=11; i++)
                 {
+                  var adding = new JissoLogRecord()
+                  {
+                    KibanID = items[0],
+                    OffsetNo = i
+                  };
+                  rtn.Append(adding);
                 }
               }
             }

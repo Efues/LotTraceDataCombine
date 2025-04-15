@@ -1,4 +1,5 @@
 ﻿
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using System.ComponentModel;
 using System.Text;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
@@ -14,8 +15,8 @@ namespace LotTraceDataCombine
   public class FileCombineMgr
   {
     public string ErrMsg { get; private set; } = string.Empty;
-    public StringBuilder StatMsg { get; private set; } = new StringBuilder();
 
+    private string HinbanMappingFilePath { get; }
     private string EDUFolder { get; }
     private string EDUFolderManual { get; }
     private string MotorFolder { get; }
@@ -25,6 +26,7 @@ namespace LotTraceDataCombine
 
 
     public FileCombineMgr(
+      string hinbanMappingFilePath,
       string eDUFolder,
       string eDUFolderManual,
       string motorFolder,
@@ -32,6 +34,7 @@ namespace LotTraceDataCombine
       string jissouFolderManual,
       string outputFile)
     {
+      this.HinbanMappingFilePath = hinbanMappingFilePath;
       this.EDUFolder = eDUFolder;
       this.EDUFolderManual = eDUFolderManual;
       this.MotorFolder = motorFolder;
@@ -43,95 +46,165 @@ namespace LotTraceDataCombine
     internal Result Execute(BackgroundWorker bgWorker)
     {
       var cnter = 0;
-      bgWorker.ReportProgress(++cnter, "処理開始....");
-
-      var stt = System.Environment.TickCount;
-      StatMsg.Clear();
-
-      var result = CheckFolderExistance();
-      if (result == Result.Failed) return Result.Failed;
-
-      var outputFolder = Path.GetDirectoryName(OutputFile);
-      if (!Directory.Exists(outputFolder) && outputFolder != null)
+      try
       {
-        Directory.CreateDirectory(outputFolder);
-      }
+        bgWorker.ReportProgress(++cnter, "処理開始....");
 
-      // 実装ログをロード
-      var stt1 = 0;
+        var stt = Environment.TickCount;
 
-      stt1 = Environment.TickCount;
+        // 品番マッピングファイルの確認
+        var hinbanMappingTable = new Dictionary<string, string>();
+        {
+          bgWorker.ReportProgress(++cnter, "品番マッピングファイル読み込み");
+          var result = LoadHinbanMapping(bgWorker, ref cnter, hinbanMappingTable);
+          if (result == Result.Failed) return Result.Failed;
+        }
+        bgWorker.ReportProgress(++cnter, $"....完了");
 
-      bgWorker.ReportProgress(++cnter, "実装ログの読み込み....");
-      var jissoLog = JissoLog.Load(this.JissouFolder, this.JissouFolderManual);
-      bgWorker.ReportProgress(++cnter, $"....完了");
-      bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1) / 1000}秒)");
-      bgWorker.ReportProgress(++cnter, $"実装ログ:{jissoLog.Rec.Count()}件");
+        /*
+        {
+          var result = CheckFolderExistance();
+          if (result == Result.Failed) return Result.Failed;
+        }
+        */
 
-      // テスト的に手動実装ログを出力する
-//      TestExportManualJissouLog(jissoLog);
+        var outputFolder = Path.GetDirectoryName(OutputFile);
+        if (!Directory.Exists(outputFolder) && outputFolder != null)
+        {
+          Directory.CreateDirectory(outputFolder);
+        }
 
-      // EDUログをロード
-      stt1 = Environment.TickCount;
-      bgWorker.ReportProgress(++cnter, "EDUログの読み込み....");
-      var eduLog = EDULog.Load(this.EDUFolder, this.EDUFolderManual);
-      bgWorker.ReportProgress(++cnter, "....完了");
-      bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1) / 1000}秒)");
-      bgWorker.ReportProgress(++cnter, $"EDUログ:{eduLog.Rec.Count()}件");
+        // 実装ログをロード
+        var stt1 = 0;
 
-      // テスト的に手動EDUログを出力する
-//      TestExportManualEDULog(eduLog);
-
-
-      // モーターログをロード
-      stt1 = Environment.TickCount;
-      bgWorker.ReportProgress(++cnter, "Motorログの読み込み....");
-      var motorLog = MotorLog.Load(this.MotorFolder, bgWorker);
-      bgWorker.ReportProgress(++cnter, "....完了");
-      bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1)/1000}秒)");
-      bgWorker.ReportProgress(++cnter, $"MotorEDUSheet:{motorLog.EDURec.Count()}件");
-      bgWorker.ReportProgress(++cnter, $"Motor検査Sheet:{motorLog.InspRec.Count()}件");
-      bgWorker.ReportProgress(++cnter, $"Motor結合ログ:{motorLog.Rec.Count()}件");
-
-      // データを連結
-      var eduMotorRec = new Dictionary<string, (EDULogRecord, MotorEDULogRecord, MotorInspectLogRecord)>();
-      {
         stt1 = Environment.TickCount;
-        bgWorker.ReportProgress(++cnter, "実装ログとEDUログの紐づけ....");
+
+        bgWorker.ReportProgress(++cnter, "実装ログの読み込み....");
+        var jissoLog = JissoLog.Load(this.JissouFolder, this.JissouFolderManual);
+        bgWorker.ReportProgress(++cnter, $"....完了");
+        bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1) / 1000}秒)");
+        bgWorker.ReportProgress(++cnter, $"実装ログ:{jissoLog.Rec.Count()}件");
+
+        // テスト的に手動実装ログを出力する
+        //      TestExportManualJissouLog(jissoLog);
+
+        // EDUログをロード
+        stt1 = Environment.TickCount;
+        bgWorker.ReportProgress(++cnter, "EDUログの読み込み....");
+        var eduLog = EDULog.Load(this.EDUFolder, this.EDUFolderManual);
+        bgWorker.ReportProgress(++cnter, "....完了");
+        bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1) / 1000}秒)");
+        bgWorker.ReportProgress(++cnter, $"EDUログ:{eduLog.Rec.Count()}件");
+
+        // テスト的に手動EDUログを出力する
+        //      TestExportManualEDULog(eduLog);
+
+
+        // モーターログをロード
+        stt1 = Environment.TickCount;
+        bgWorker.ReportProgress(++cnter, "Motorログの読み込み....");
+        var motorLog = MotorLog.Load(this.MotorFolder, bgWorker);
+        bgWorker.ReportProgress(++cnter, "....完了");
+        bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1) / 1000}秒)");
+//        bgWorker.ReportProgress(++cnter, $"MotorEDUSheet:{motorLog.EDURec.Count()}件");
+//        bgWorker.ReportProgress(++cnter, $"Motor検査Sheet:{motorLog.InspRec.Count()}件");
+//        bgWorker.ReportProgress(++cnter, $"Motor結合ログ:{motorLog.Rec.Count()}件");
+
+        // データを連結
+        bgWorker.ReportProgress(++cnter, "データ紐づけ....");
+        stt1 = Environment.TickCount;
+        var combinedRec = ConbineRows(jissoLog, eduLog, motorLog);
+        bgWorker.ReportProgress(++cnter, $"....完了");
+        bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1) / 1000}秒)");
+
+        // 結果出力
+        bgWorker.ReportProgress(++cnter, $"結果出力開始");
+        ExportFile(combinedRec, hinbanMappingTable);
+        bgWorker.ReportProgress(++cnter, $"....完了");
+        return Result.Success;
+      }
+      catch (Exception ex)
+      {
+        bgWorker.ReportProgress(0, "内部エラー");
+        bgWorker.ReportProgress(0, ex.Message);
+        return Result.Failed;
+      }
+    }
+
+    private static List<(JissoLogRecord, EDULogRecord?, MotorEDULogRecord?, MotorInspectLogRecord?)>
+      ConbineRows(JissoLog jissoLog, EDULog eduLog, MotorLog motorLog)
+    {
+      var combinedRec = new List<(JissoLogRecord, EDULogRecord?, MotorEDULogRecord?, MotorInspectLogRecord?)>();
+      // 実装ログデータがある場合
+      if (jissoLog.Rec.Count > 0)
+      {
+        var idx = 0;
+        foreach (var jissouRec in jissoLog.Rec)
+        {
+          idx++;
+          JissoLogRecord addingJissouRec = jissouRec.Value;
+          EDULogRecord addingEduLogRec = null;
+          MotorEDULogRecord addingMotorEduLogRec = null;
+          MotorInspectLogRecord addingMotorInspectLogRec = null;
+
+          var jissouSerialKey = jissouRec.Key;
+
+          // eduを検索
+          var hit = eduLog.RecJissouKey.FirstOrDefault(item => item.Key == jissouSerialKey);
+          if (hit.Key != null)
+          {
+            addingEduLogRec = hit.Value;
+
+            // モータログを検索
+            var eduQRkey = hit.Value.Serial1;
+            if (motorLog.Rec.ContainsKey(eduQRkey))
+            {
+              var motorLogAppend = motorLog.Rec[eduQRkey];
+              addingMotorEduLogRec = motorLogAppend.Item1;
+              addingMotorInspectLogRec = motorLogAppend.Item2;
+            }
+          }
+          else
+          {
+            // モーターログを検索
+            if (motorLog.RecJissouKey.ContainsKey(jissouSerialKey))
+            {
+              var motorLogAppend = motorLog.RecJissouKey[jissouSerialKey];
+              addingMotorEduLogRec = motorLogAppend.Item1;
+              addingMotorInspectLogRec = motorLogAppend.Item2;
+            }
+          }
+          combinedRec.Add((addingJissouRec, addingEduLogRec, addingMotorEduLogRec, addingMotorInspectLogRec));
+        }
+      }
+      // 実装ログデータがない場合
+      else
+      {
         foreach (var eduRec in eduLog.Rec)
         {
+          JissoLogRecord addingJissouRec = null;
+          EDULogRecord addingEduLogRec = eduRec.Value;
+          MotorEDULogRecord addingMotorEduLogRec = null;
+          MotorInspectLogRecord addingMotorInspectLogRec = null;
+
           var eduQRkey = eduRec.Key;
           if (motorLog.Rec.ContainsKey(eduQRkey))
           {
             var motorLogAppend = motorLog.Rec[eduQRkey];
-            eduMotorRec.Add(eduQRkey, (eduRec.Value, motorLogAppend.Item1, motorLogAppend.Item2));
+            addingMotorEduLogRec = motorLogAppend.Item1;
+            addingMotorInspectLogRec = motorLogAppend.Item2;
           }
+          combinedRec.Add((addingJissouRec, addingEduLogRec, addingMotorEduLogRec, addingMotorInspectLogRec));
         }
-        bgWorker.ReportProgress(++cnter, $"....完了");
-        bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1) / 1000}秒)");
-        bgWorker.ReportProgress(++cnter, $"EDUMotor結合ログ:{eduMotorRec.Count()}件");
       }
+      return combinedRec;
+    }
 
-      var combinedRec = new List<(JissoLogRecord, EDULogRecord, MotorEDULogRecord, MotorInspectLogRecord)>();
-      {
-        stt1 = Environment.TickCount;
-        foreach (var eduRec in eduMotorRec)
-        {
-          var jissouSerial = eduRec.Value.Item1.JissouSerial;
-          if (jissoLog.Rec.ContainsKey(jissouSerial))
-          {
-            var appendingJissuRec = jissoLog.Rec[jissouSerial];
-            combinedRec.Add((appendingJissuRec, eduRec.Value.Item1, eduRec.Value.Item2, eduRec.Value.Item3));
-          }
-        }
-        bgWorker.ReportProgress(++cnter, $"....完了");
-        bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1)/1000}秒)");
-        bgWorker.ReportProgress(++cnter, $"実装EDUMotor結合ログ:{combinedRec.Count()}件");
-      }
-
-      // 結果出力
-      bgWorker.ReportProgress(++cnter, $"結果出力開始");
-
+    private void ExportFile(
+      List<(JissoLogRecord, EDULogRecord?, MotorEDULogRecord?, MotorInspectLogRecord?)> combinedRec,
+      Dictionary<string, string> hinbanMappingTable
+      )
+    {
       var fileName = $"{DateTime.Now.ToString("yyMMddHHmmss")}.csv";
       var filePath = Path.Combine(this.OutputFile, fileName);
       using (var ws = new StreamWriter(filePath, false, Encoding.GetEncoding("shift-jis")))
@@ -148,26 +221,90 @@ namespace LotTraceDataCombine
           var EDULog = rec.Item2;
           var MotorEDULog = rec.Item3;
           var MotorInspectionLog = rec.Item4;
-          ws.Write(jissouLog.BuhinID + ",");
-          ws.Write(jissouLog.BuhinLotID + ",");
-          ws.Write(jissouLog.KibanID + ",");
-          ws.Write(jissouLog.Kohen + ",");
-          ws.Write(jissouLog.KibanID.Substring(0,4) + "-" + jissouLog.KibanID.Substring(4, 6) +",");
-          ws.Write(jissouLog.SagyouNichijiFormatted.ToString() + ",");
-          ws.Write(EDULog.Serial1 + ",");
-          ws.Write(EDULog.Seihinban + ",");
-          ws.Write(EDULog.GSSHaraidashiDT + ",");
-          ws.Write(EDULog.KanbanExport + ",");
-          ws.Write(MotorEDULog.LineSerial + ",");
-          ws.Write(MotorEDULog.LineNo + ",");
-          ws.Write(MotorInspectionLog.SerialStr + ",");
-          ws.Write(MotorInspectionLog.SeihinHinban + ",");
-          ws.Write(MotorInspectionLog.MotorQR + ",");
-          ws.Write(MotorInspectionLog.KensaKanryouNichiji);
+          if (jissouLog != null)
+          {
+            ws.Write(jissouLog.BuhinID + ",");
+            ws.Write(jissouLog.BuhinLotID + ",");
+            ws.Write(jissouLog.KibanID + ",");
+            ws.Write(jissouLog.Kohen + ",");
+            ws.Write(jissouLog.KibanID.Substring(0, 4) + "-" + jissouLog.KibanID.Substring(4, 6) + ",");
+            ws.Write(jissouLog.SagyouNichijiFormatted.ToString() + ",");
+          }
+          else
+          {
+            ws.Write(",,,,,,");
+          }
+          if (EDULog != null)
+          {
+            ws.Write(EDULog.Serial1 + ",");
+            ws.Write(EDULog.Seihinban + ",");
+            ws.Write(EDULog.GSSHaraidashiDT + ",");
+            ws.Write(EDULog.KanbanExport + ",");
+          }
+          else
+          {
+            // モーターログからEDU情報を取得できる場合
+            if (MotorEDULog != null)
+            {
+              ws.Write(MotorEDULog.EDUSerial + ",");
+              ws.Write(MotorEDULog.EDUHinban + ",");
+              ws.Write(",,");
+            }
+            else
+            {
+              ws.Write(",,,,");
+            }
+          }
+          if (MotorEDULog != null)
+          {
+            ws.Write(MotorEDULog.LineSerial + ",");
+            ws.Write(MotorEDULog.LineNo + ",");
+          }
+          else
+          {
+            ws.Write(",,");
+          }
+          if (MotorInspectionLog != null)
+          {
+            ws.Write(MotorInspectionLog.SerialStr + ",");
+            ws.Write(MotorInspectionLog.SeihinHinban + ",");
+            ws.Write(MotorInspectionLog.GetMotorQR(hinbanMappingTable) + ",");
+            ws.Write(MotorInspectionLog.KensaKanryouNichiji);
+          }
+          else
+          {
+            ws.Write(",,,,");
+          }
           ws.WriteLine();
         }
       }
-      bgWorker.ReportProgress(++cnter, $"....完了");
+    }
+
+    private Result LoadHinbanMapping(BackgroundWorker bgWorker, ref int cnter, Dictionary<string, string> hinbanMappingTable)
+    {
+      if (!File.Exists(HinbanMappingFilePath))
+      {
+        ErrMsg = $"品番マッピングファイル{HinbanMappingFilePath}が見つかりません。";
+        return Result.Failed;
+      }
+
+      using (var rs = new StreamReader(HinbanMappingFilePath, Encoding.GetEncoding("shift-jis")))
+      {
+        while (!rs.EndOfStream)
+        {
+          var item = rs.ReadLine().Split(',');
+          if (item.Length > 1)
+          {
+            var key = item[0].Trim('"');
+            var value = item[1].Trim('"');
+            if (!hinbanMappingTable.ContainsKey(key))
+            {
+              hinbanMappingTable[key] = value;
+              bgWorker.ReportProgress(++cnter, $"{key}/{value}");
+            }
+          }
+        }
+      }
       return Result.Success;
     }
 
@@ -208,24 +345,26 @@ namespace LotTraceDataCombine
       }
     }
 
-    private Result CheckFolderExistance()
+    /*
+  private Result CheckFolderExistance()
+  {
+    if (!Directory.Exists(EDUFolder) && !Directory.Exists(EDUFolderManual))
     {
-      if (!Directory.Exists(EDUFolder) && !Directory.Exists(EDUFolderManual))
-      {
-        ErrMsg = $"EDUログフォルダが見つかりません。";
-        return Result.Failed;
-      }
-      if (!Directory.Exists(MotorFolder))
-      {
-        ErrMsg = $"モーターログフォルダが見つかりません。";
-        return Result.Failed;
-      }
-      if (!Directory.Exists(JissouFolder) && !Directory.Exists(JissouFolderManual))
-      {
-        ErrMsg = $"実装ログフォルダが見つかりません。";
-        return Result.Failed;
-      }
-      return Result.Success;
+      ErrMsg = $"EDUログフォルダが見つかりません。";
+      return Result.Failed;
     }
+    if (!Directory.Exists(MotorFolder))
+    {
+      ErrMsg = $"モーターログフォルダが見つかりません。";
+      return Result.Failed;
+    }
+    if (!Directory.Exists(JissouFolder) && !Directory.Exists(JissouFolderManual))
+    {
+      ErrMsg = $"実装ログフォルダが見つかりません。";
+      return Result.Failed;
+    }
+    return Result.Success;
+  }
+    */
   }
 }
