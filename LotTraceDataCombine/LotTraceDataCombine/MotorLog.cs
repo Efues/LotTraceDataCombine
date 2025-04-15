@@ -92,11 +92,8 @@ namespace LotTraceDataCombine
       var fileIdx = 1;
       foreach (var filePath in fileList)
       {
-//        if(fileIdx == 1 || fileIdx == fileCnt)
-        {
-          bgWorker.ReportProgress(fileIdx, ($"{fileIdx}/{fileCnt}"));
-        }
         fileIdx++;
+        bgWorker.ReportProgress(fileIdx, ($"{fileIdx}/{fileCnt}"));
 
         using (IXLWorkbook workbook = new XLWorkbook(filePath))
         {
