@@ -86,7 +86,7 @@ namespace LotTraceDataCombine
       // モーターログをロード
       stt1 = Environment.TickCount;
       bgWorker.ReportProgress(++cnter, "Motorログの読み込み....");
-      var motorLog = MotorLog.Load(this.MotorFolder);
+      var motorLog = MotorLog.Load(this.MotorFolder, bgWorker);
       bgWorker.ReportProgress(++cnter, "....完了");
       bgWorker.ReportProgress(++cnter, $"({(Environment.TickCount - stt1)/1000}秒)");
       bgWorker.ReportProgress(++cnter, $"MotorEDUSheet:{motorLog.EDURec.Count()}件");

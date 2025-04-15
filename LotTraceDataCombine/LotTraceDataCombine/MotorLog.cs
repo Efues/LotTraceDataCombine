@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using System.ComponentModel;
 using System.Runtime.Intrinsics.X86;
 
 namespace LotTraceDataCombine
@@ -83,11 +84,20 @@ namespace LotTraceDataCombine
     // KeyはEDUSerial
     public Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)> Rec { get; } = new Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)>();
 
-    internal static MotorLog Load(string folder)
+    internal static MotorLog Load(string folder, BackgroundWorker bgWorker)
     {
       var rtn = new MotorLog();
-      foreach (var filePath in Directory.EnumerateFiles(folder, "*.xlsx"))
+      var fileList = Directory.EnumerateFiles(folder, "*.xlsx").ToList();
+      var fileCnt = fileList.Count;
+      var fileIdx = 1;
+      foreach (var filePath in fileList)
       {
+//        if(fileIdx == 1 || fileIdx == fileCnt)
+        {
+          bgWorker.ReportProgress(fileIdx, ($"{fileIdx}/{fileCnt}"));
+        }
+        fileIdx++;
+
         using (IXLWorkbook workbook = new XLWorkbook(filePath))
         {
           {
