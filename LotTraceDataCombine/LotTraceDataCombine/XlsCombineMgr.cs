@@ -19,7 +19,7 @@ namespace LotTraceDataCombine
       this.OutFolder = outFolder;
     }
 
-    internal Result Execute()
+    internal Result Execute(System.ComponentModel.BackgroundWorker bgWorker)
     {
       StatMsg.Clear();
 

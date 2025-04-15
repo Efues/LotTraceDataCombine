@@ -1,10 +1,30 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
+using System.Text;
 
 namespace LotTraceDataCombine
 {
   public class EDULogRecord
   {
+    public EDULogRecord() 
+    {
+      Kanban = String.Empty;
+      Seihinban = String.Empty;
+      Serial1 = String.Empty;
+      GSSHaraidashiDT = String.Empty;
+    }
     public string Kanban { get; set; } // EDUーかんばん管理Noで利用
+    public string KanbanExport // EDUーかんばん管理No出力する文字列
+    {
+      get
+      {
+        if(Kanban != null && Kanban.Length > 97)
+        {
+          return Kanban.Substring(93, 4);
+        }
+        return String.Empty;
+      }  
+    } 
     public string Seihinban { get; set; } // EDUーEDU品番
 //    public string ShuuyousuuRenban { get; set; }
 //    public string Shuuyousuu { get; set; }
@@ -40,35 +60,68 @@ namespace LotTraceDataCombine
 
     private Dictionary<string, int> DupCnt { get; } = new Dictionary<string, int>();
 
-    internal static EDULog Load(string folder)
+    internal static EDULog Load(string folder, string folderManual)
     {
       var rtn = new EDULog();
-      foreach (var filePath in Directory.EnumerateFiles(folder))
+
+      if (Directory.Exists(folder))
       {
-        using (IXLWorkbook workbook = new XLWorkbook(filePath))
+        foreach (var filePath in Directory.EnumerateFiles(folder))
         {
-          IXLWorksheet sheet = workbook.Worksheet(1); // インデックスで取得
-          var idx = 0;
-          foreach (IXLRow row in sheet.Rows())
+          using (IXLWorkbook workbook = new XLWorkbook(filePath))
           {
-            if (idx != 0)
+            IXLWorksheet sheet = workbook.Worksheet(1); // インデックスで取得
+            var idx = 0;
+            foreach (IXLRow row in sheet.Rows())
             {
-              var adding = new EDULogRecord()
+              if (idx != 0)
               {
-                Kanban = row.Cell(1).Value.ToString(),
-                Seihinban = row.Cell(2).Value.ToString(),
-//                ShuuyousuuRenban = row.Cell(3).Value.ToString(),
-//                Shuuyousuu = row.Cell(4).Value.ToString(),
-                Serial1 = row.Cell(5).Value.ToString(),
-//                Serial2 = row.Cell(6).Value.ToString(),
-//                TsuikaKirokuKoumoku = row.Cell(7).Value.ToString(),
-//                GSSTanmatsu = row.Cell(8).Value.ToString(),
-//                SagyoushaID = row.Cell(9).Value.ToString(),
-                GSSHaraidashiDT = row.Cell(10).Value.ToString(),
-              };
-              rtn.Append(adding);
+                var adding = new EDULogRecord()
+                {
+                  Kanban = row.Cell(1).Value.ToString(),
+                  Seihinban = row.Cell(2).Value.ToString(),
+                  //                ShuuyousuuRenban = row.Cell(3).Value.ToString(),
+                  //                Shuuyousuu = row.Cell(4).Value.ToString(),
+                  Serial1 = row.Cell(5).Value.ToString(),
+                  //                Serial2 = row.Cell(6).Value.ToString(),
+                  //                TsuikaKirokuKoumoku = row.Cell(7).Value.ToString(),
+                  //                GSSTanmatsu = row.Cell(8).Value.ToString(),
+                  //                SagyoushaID = row.Cell(9).Value.ToString(),
+                  GSSHaraidashiDT = row.Cell(10).Value.ToString(),
+                };
+                rtn.Append(adding);
+              }
+              idx++;
             }
-            idx++;
+          }
+        }
+      }
+
+      if (Directory.Exists(folderManual))
+      {
+        foreach (var filePath in Directory.EnumerateFiles(folderManual))
+        {
+          using (var rs = new StreamReader(filePath, Encoding.GetEncoding("shift-jis")))
+          {
+            var idx = 0;
+            while (!rs.EndOfStream)
+            {
+              var line = rs.ReadLine();
+              if (idx != 0)
+              {
+                if (line == null) continue;
+                var items = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                if (items.Length >= 1)
+                {
+                  var adding = new EDULogRecord()
+                  {
+                    Serial1 = items[0],
+                  };
+                  rtn.Append(adding);
+                }
+              }
+              idx++;
+            }
           }
         }
       }

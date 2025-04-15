@@ -82,5 +82,29 @@ namespace LotTraceDataCombine.Properties {
                 this["MotorFolderXls"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string EDUFolderManual {
+            get {
+                return ((string)(this["EDUFolderManual"]));
+            }
+            set {
+                this["EDUFolderManual"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string JissouFolderManual {
+            get {
+                return ((string)(this["JissouFolderManual"]));
+            }
+            set {
+                this["JissouFolderManual"] = value;
+            }
+        }
     }
 }
