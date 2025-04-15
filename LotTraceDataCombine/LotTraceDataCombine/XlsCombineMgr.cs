@@ -39,7 +39,7 @@ namespace LotTraceDataCombine
         foreach (var subFolder in Directory.EnumerateDirectories(InFolder))
         {
           var subFolderName = Path.GetFileName(subFolder);
-          bgWorker.ReportProgress(++cnter, subFolderName);
+          bgWorker.ReportProgress(++cnter, "サブフォルダ名:" + subFolderName);
 
           var fileList = Directory.EnumerateFiles(subFolder, "*.xls").ToList();
           var fileCnt = fileList.Count();
