@@ -29,6 +29,14 @@
     private void InitializeComponent()
     {
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+      splitContainer1 = new SplitContainer();
+      dataGridView = new DataGridView();
+      numericUpDownRowCnt = new NumericUpDown();
+      buttonOpenFolder = new Button();
+      textBoxFileResult = new TextBox();
+      label9 = new Label();
+      label8 = new Label();
+      textBoxStatus = new TextBox();
       groupBox1 = new GroupBox();
       buttonSelectEDULogManual = new Button();
       textBoxEDULogFolderManual = new TextBox();
@@ -54,16 +62,76 @@
       textBoxEDULogFolder = new TextBox();
       label1 = new Label();
       groupBox2 = new GroupBox();
-      splitContainer1 = new SplitContainer();
-      textBoxStatus = new TextBox();
       backgroundWorkerMain = new System.ComponentModel.BackgroundWorker();
       backgroundWorkerMotorConv = new System.ComponentModel.BackgroundWorker();
-      groupBox1.SuspendLayout();
-      groupBox2.SuspendLayout();
       ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+      splitContainer1.Panel1.SuspendLayout();
       splitContainer1.Panel2.SuspendLayout();
       splitContainer1.SuspendLayout();
+      ((System.ComponentModel.ISupportInitialize)dataGridView).BeginInit();
+      ((System.ComponentModel.ISupportInitialize)numericUpDownRowCnt).BeginInit();
+      groupBox1.SuspendLayout();
+      groupBox2.SuspendLayout();
       SuspendLayout();
+      // 
+      // splitContainer1
+      // 
+      resources.ApplyResources(splitContainer1, "splitContainer1");
+      splitContainer1.Name = "splitContainer1";
+      // 
+      // splitContainer1.Panel1
+      // 
+      splitContainer1.Panel1.Controls.Add(dataGridView);
+      splitContainer1.Panel1.Controls.Add(numericUpDownRowCnt);
+      splitContainer1.Panel1.Controls.Add(buttonOpenFolder);
+      splitContainer1.Panel1.Controls.Add(textBoxFileResult);
+      splitContainer1.Panel1.Controls.Add(label9);
+      splitContainer1.Panel1.Controls.Add(label8);
+      // 
+      // splitContainer1.Panel2
+      // 
+      splitContainer1.Panel2.Controls.Add(textBoxStatus);
+      // 
+      // dataGridView
+      // 
+      resources.ApplyResources(dataGridView, "dataGridView");
+      dataGridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+      dataGridView.Name = "dataGridView";
+      // 
+      // numericUpDownRowCnt
+      // 
+      resources.ApplyResources(numericUpDownRowCnt, "numericUpDownRowCnt");
+      numericUpDownRowCnt.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+      numericUpDownRowCnt.Minimum = new decimal(new int[] { 10, 0, 0, 0 });
+      numericUpDownRowCnt.Name = "numericUpDownRowCnt";
+      numericUpDownRowCnt.Value = new decimal(new int[] { 100, 0, 0, 0 });
+      // 
+      // buttonOpenFolder
+      // 
+      resources.ApplyResources(buttonOpenFolder, "buttonOpenFolder");
+      buttonOpenFolder.Name = "buttonOpenFolder";
+      buttonOpenFolder.UseVisualStyleBackColor = true;
+      buttonOpenFolder.Click += buttonOpenFolder_Click;
+      // 
+      // textBoxFileResult
+      // 
+      resources.ApplyResources(textBoxFileResult, "textBoxFileResult");
+      textBoxFileResult.Name = "textBoxFileResult";
+      // 
+      // label9
+      // 
+      resources.ApplyResources(label9, "label9");
+      label9.Name = "label9";
+      // 
+      // label8
+      // 
+      resources.ApplyResources(label8, "label8");
+      label8.Name = "label8";
+      // 
+      // textBoxStatus
+      // 
+      resources.ApplyResources(textBoxStatus, "textBoxStatus");
+      textBoxStatus.Name = "textBoxStatus";
       // 
       // groupBox1
       // 
@@ -234,20 +302,6 @@
       groupBox2.Name = "groupBox2";
       groupBox2.TabStop = false;
       // 
-      // splitContainer1
-      // 
-      resources.ApplyResources(splitContainer1, "splitContainer1");
-      splitContainer1.Name = "splitContainer1";
-      // 
-      // splitContainer1.Panel2
-      // 
-      splitContainer1.Panel2.Controls.Add(textBoxStatus);
-      // 
-      // textBoxStatus
-      // 
-      resources.ApplyResources(textBoxStatus, "textBoxStatus");
-      textBoxStatus.Name = "textBoxStatus";
-      // 
       // backgroundWorkerMain
       // 
       backgroundWorkerMain.DoWork += backgroundWorker1_DoWork;
@@ -269,13 +323,17 @@
       Name = "Form1";
       FormClosing += Form1_FormClosing;
       Load += Form1_Load;
-      groupBox1.ResumeLayout(false);
-      groupBox1.PerformLayout();
-      groupBox2.ResumeLayout(false);
+      splitContainer1.Panel1.ResumeLayout(false);
+      splitContainer1.Panel1.PerformLayout();
       splitContainer1.Panel2.ResumeLayout(false);
       splitContainer1.Panel2.PerformLayout();
       ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
       splitContainer1.ResumeLayout(false);
+      ((System.ComponentModel.ISupportInitialize)dataGridView).EndInit();
+      ((System.ComponentModel.ISupportInitialize)numericUpDownRowCnt).EndInit();
+      groupBox1.ResumeLayout(false);
+      groupBox1.PerformLayout();
+      groupBox2.ResumeLayout(false);
       ResumeLayout(false);
     }
 
@@ -310,5 +368,11 @@
     private TextBox textBoxJissouLogFolderManual;
     private Label label6;
     private System.ComponentModel.BackgroundWorker backgroundWorkerMotorConv;
+    private DataGridView dataGridView;
+    private NumericUpDown numericUpDownRowCnt;
+    private Button buttonOpenFolder;
+    private TextBox textBoxFileResult;
+    private Label label9;
+    private Label label8;
   }
 }

@@ -106,9 +106,11 @@ namespace LotTraceDataCombine
                 var items = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 if (items.Length >= 1)
                 {
+                  var seihinBan = GetSeihinbanFromQR(items[0]);
                   var adding = new EDULogRecord()
                   {
                     Serial1 = items[0],
+                    Seihinban = seihinBan,
                   };
                   rtn.Append(adding);
                 }
@@ -120,6 +122,13 @@ namespace LotTraceDataCombine
       }
       return rtn;
     }
+
+    private static string GetSeihinbanFromQR(string serial)
+    {
+      if (serial.Length < 10) return string.Empty;
+      return serial.Substring(0, 6) + "-" + serial.Substring(5, 4);
+    }
+
     public void Append(EDULogRecord adding)
     {
       var key = adding.Serial1;

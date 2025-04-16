@@ -15,6 +15,7 @@ namespace LotTraceDataCombine
   public class FileCombineMgr
   {
     public string ErrMsg { get; private set; } = string.Empty;
+    public string ExportedFilePath { get; private set; } = string.Empty;
 
     private string HinbanMappingFilePath { get; }
     private string EDUFolder { get; }
@@ -45,6 +46,7 @@ namespace LotTraceDataCombine
 
     internal Result Execute(BackgroundWorker bgWorker)
     {
+      ExportedFilePath = String.Empty;
       var cnter = 0;
       try
       {
@@ -119,7 +121,7 @@ namespace LotTraceDataCombine
 
         // 結果出力
         bgWorker.ReportProgress(++cnter, $"結果出力開始");
-        ExportFile(combinedRec, hinbanMappingTable);
+        ExportedFilePath = ExportFile(combinedRec, hinbanMappingTable);
         bgWorker.ReportProgress(++cnter, $"....完了");
         return Result.Success;
       }
@@ -200,7 +202,7 @@ namespace LotTraceDataCombine
       return combinedRec;
     }
 
-    private void ExportFile(
+    private string ExportFile(
       List<(JissoLogRecord, EDULogRecord?, MotorEDULogRecord?, MotorInspectLogRecord?)> combinedRec,
       Dictionary<string, string> hinbanMappingTable
       )
@@ -278,6 +280,7 @@ namespace LotTraceDataCombine
           ws.WriteLine();
         }
       }
+      return filePath;
     }
 
     private Result LoadHinbanMapping(BackgroundWorker bgWorker, ref int cnter, Dictionary<string, string> hinbanMappingTable)

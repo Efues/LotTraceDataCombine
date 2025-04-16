@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Data;
 using System.Text;
 
 namespace LotTraceDataCombine
@@ -127,7 +128,7 @@ namespace LotTraceDataCombine
     {
       try
       {
-        SelectFolder(textBoxEDULogFolder);
+        SelectFolder(textBoxMotorLogFolder_xls);
       }
       catch (Exception exp)
       {
@@ -140,7 +141,7 @@ namespace LotTraceDataCombine
     {
       try
       {
-        SelectFolder(textBoxEDULogFolder);
+        SelectFolder(textBoxJissouLogFolder);
       }
       catch (Exception exp)
       {
@@ -205,10 +206,66 @@ namespace LotTraceDataCombine
       }
     }
 
+    private string ExportedFilePath { get; set; } = string.Empty;
     private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
     {
       //Button‚ð—LŒø‰»
       groupBox1.Enabled = true;
+      textBoxFileResult.Text = ExportedFilePath;
+
+      try
+      {
+        // Œ‹‰Ê‚ðDGV‚É•\Ž¦‚·‚é
+        if (File.Exists(ExportedFilePath))
+        {
+          UpdateDGV();
+        }
+      }
+      catch (Exception exp)
+      {
+        textBoxStatus.Text += exp.Message;
+        textBoxStatus.Text += Environment.NewLine;
+      }
+    }
+
+    private void UpdateDGV()
+    {
+      var dt = new DataTable();
+      var rowsCnt = (int)numericUpDownRowCnt.Value;
+      using (var rs = new StreamReader(ExportedFilePath, Encoding.GetEncoding("shift-jis")))
+      {
+        var idx = 0;
+        while (!rs.EndOfStream)
+        {
+          idx++;
+          if (idx >= rowsCnt) break;
+
+          var line = rs.ReadLine();
+          if (line == null) continue;
+          var items = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
+          if (idx == 1)
+          {
+            foreach (var item in items)
+            {
+              dt.Columns.Add(item);
+            }
+          }
+          else
+          {
+            var adding = dt.NewRow();
+            var colIdx = 0;
+            foreach (var item in items)
+            {
+              if (colIdx < dt.Columns.Count)
+              {
+                adding[colIdx++] = item;
+              }
+            }
+            dt.Rows.Add(adding);
+          }
+        }
+      }
+      dataGridView.DataSource = dt;
     }
 
     private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -230,6 +287,7 @@ namespace LotTraceDataCombine
         MessageBox.Show(mgr.ErrMsg, Properties.Resources.Error);
         return;
       }
+      ExportedFilePath = mgr.ExportedFilePath;
     }
 
     private void backgroundWorkerMotorConv_DoWork(object sender, DoWorkEventArgs e)
@@ -257,6 +315,19 @@ namespace LotTraceDataCombine
     {
       //Button‚ð—LŒø‰»
       groupBox1.Enabled = true;
+    }
+
+    private void buttonOpenFolder_Click(object sender, EventArgs e)
+    {
+      var filePath = textBoxFileResult.Text;
+      if (filePath != String.Empty)
+      {
+        var folderPath = Path.GetDirectoryName(filePath);
+        if (Directory.Exists(folderPath))
+        {
+          System.Diagnostics.Process.Start("explorer.exe", folderPath);
+        }
+      }
     }
   }
 }
