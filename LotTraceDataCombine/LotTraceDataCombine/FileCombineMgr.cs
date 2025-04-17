@@ -229,7 +229,7 @@ namespace LotTraceDataCombine
             ws.Write(jissouLog.BuhinLotID + ",");
             ws.Write(jissouLog.KibanID + ",");
             ws.Write(jissouLog.Kohen + ",");
-            ws.Write(jissouLog.KibanID.Substring(0, 4) + "-" + jissouLog.KibanID.Substring(4, 6) + ",");
+            ws.Write(jissouLog.KibanID.Substring(0, 6) + "-" + jissouLog.KibanID.Substring(6,4) + ",");
             ws.Write(jissouLog.SagyouNichijiFormatted.ToString() + ",");
           }
           else
