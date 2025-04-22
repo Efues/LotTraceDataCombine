@@ -242,7 +242,7 @@ namespace LotTraceDataCombine
 
           var line = rs.ReadLine();
           if (line == null) continue;
-          var items = line.Split(',', StringSplitOptions.RemoveEmptyEntries);
+          var items = line.Split(',');
           if (idx == 1)
           {
             foreach (var item in items)
