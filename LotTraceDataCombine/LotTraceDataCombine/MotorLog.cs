@@ -24,7 +24,7 @@ namespace LotTraceDataCombine
       get
       {
         if (EDUSerial.Length < 10) return string.Empty;
-        return EDUSerial.Substring(0, 6) + "-" + EDUSerial.Substring(5, 4);
+        return EDUSerial.Substring(0, 6) + "-" + EDUSerial.Substring(6, 4);
       }
     }
   }

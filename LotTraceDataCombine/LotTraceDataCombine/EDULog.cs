@@ -69,10 +69,15 @@ namespace LotTraceDataCombine
             {
               if (idx != 0)
               {
+                var hinban = row.Cell(2).Value.ToString();
+                if(hinban.Length >= 10)
+                {
+                  hinban = hinban.Substring(0, 6) + "-" + hinban.Substring(6);
+                }
                 var adding = new EDULogRecord()
                 {
                   Kanban = row.Cell(1).Value.ToString(),
-                  Seihinban = row.Cell(2).Value.ToString(),
+                  Seihinban = hinban,
                   //                ShuuyousuuRenban = row.Cell(3).Value.ToString(),
                   //                Shuuyousuu = row.Cell(4).Value.ToString(),
                   Serial1 = row.Cell(5).Value.ToString(),
@@ -126,7 +131,7 @@ namespace LotTraceDataCombine
     private static string GetSeihinbanFromQR(string serial)
     {
       if (serial.Length < 10) return string.Empty;
-      return serial.Substring(0, 6) + "-" + serial.Substring(5, 4);
+      return serial.Substring(0, 6) + "-" + serial.Substring(6, 4);
     }
 
     public void Append(EDULogRecord adding)
