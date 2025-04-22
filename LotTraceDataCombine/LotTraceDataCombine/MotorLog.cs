@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Bibliography;
 using System.ComponentModel;
 using System.Runtime.Intrinsics.X86;
 
@@ -9,7 +10,7 @@ namespace LotTraceDataCombine
     public string LineSerial { get; set; }
     public string LineNo { get; set; }
     public string EDUSerial { get; set; }
-
+    
     public string JissouSerial
     {
       get
@@ -80,6 +81,7 @@ namespace LotTraceDataCombine
 
     private Dictionary<string, int> InspDupCnt { get; } = new Dictionary<string, int>();
 
+    public string ErrMsg = string.Empty;
 
     // KeyはEDUSerial
     public Dictionary<string, (MotorEDULogRecord, MotorInspectLogRecord)> Rec { get; } 
@@ -107,7 +109,7 @@ namespace LotTraceDataCombine
             var idx = 0;
             foreach (IXLRow row in eduSerialSheet.Rows())
             {
-              if (idx > 99)
+              if (idx > 96)
               {
                 var adding = new MotorEDULogRecord()
                 {
@@ -125,7 +127,7 @@ namespace LotTraceDataCombine
             var idx = 0;
             foreach (IXLRow row in inspSerialSheet.Rows())
             {
-              if (idx > 99)
+              if (idx > 96)
               {
                 int? seihinHinban1 = null;
                 int? seihinHinban2 = null;
@@ -174,12 +176,12 @@ namespace LotTraceDataCombine
           }
         }
       }
-
       return rtn;
     }
 
     public void Append(MotorEDULogRecord adding)
     {
+      if (adding.LineSerial == String.Empty) return;
       var key = adding.LineSerial+ "_" + adding.LineNo;
       if (EDURec.ContainsKey(key))
       {
@@ -191,9 +193,22 @@ namespace LotTraceDataCombine
 
     public void Append(MotorInspectLogRecord adding)
     {
+      if (adding.LineSerial == String.Empty) return;
       var key = adding.LineSerial + "_" + adding.LineNo;
+      
       if (InspRec.ContainsKey(key))
       {
+        var current = InspRec[key];
+        var parseSuccess1 = DateTime.TryParse(current.KensaKanryouNichiji, out var currentDT);
+        var parseSuccess2 = DateTime.TryParse(adding.KensaKanryouNichiji, out var addingDT);
+        if (parseSuccess1 == false || parseSuccess2 == false)
+        {
+          ErrMsg += "検査日時のパースエラー";
+        }
+        else if(addingDT > currentDT)
+        {
+          InspRec[key] = adding;
+        }
         if (InspDupCnt.ContainsKey(key)) InspDupCnt[key] += 1;
         else InspDupCnt[key] = 1;
       }
